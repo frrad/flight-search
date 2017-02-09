@@ -1,1 +1,5 @@
+.\#*
+\#*
+*.pyc
 api.key
+*.json
