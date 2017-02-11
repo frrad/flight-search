@@ -2,4 +2,5 @@
 \#*
 *.pyc
 api.key
-
+*.json
+/node_modules/*
