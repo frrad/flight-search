@@ -1,29 +1,24 @@
 {
   "Type": "AND",
   "AirportCode": "",
-  "Modifier": "",
   "Children": [
     {
       "Type": "OR",
       "AirportCode": "",
-      "Modifier": "",
       "Children": [
         {
           "Type": "DEPART",
           "AirportCode": "SFO",
-          "Modifier": "",
           "Children": []
         },
         {
           "Type": "DEPART",
           "AirportCode": "SJC",
-          "Modifier": "",
           "Children": []
         },
         {
           "Type": "DEPART",
           "AirportCode": "OAK",
-          "Modifier": "",
           "Children": []
         }
       ]
@@ -31,12 +26,10 @@
     {
       "Type": "OR",
       "AirportCode": "",
-      "Modifier": "",
       "Children": [
         {
           "Type": "ARRIVE",
           "AirportCode": "MCO",
-          "Modifier": "",
           "Children": []
         },
         {
