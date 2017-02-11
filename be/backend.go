@@ -35,15 +35,18 @@ type modifier struct {
 func disp_format(tree query_tree, depth int) string {
 	front_pad := strings.Repeat(" ", depth)
 
-	answer := front_pad + fmt.Sprintf("type: %s\n", tree.Type)
+	answer :=  front_pad + fmt.Sprintf("type: %s\n", tree.Type)
 
 	if mod := disp_mod(tree.Modifier); mod != "" {
-		answer += front_pad + fmt.Sprintf("modifier: %s\n", mod)
+		answer +=  front_pad + fmt.Sprintf("modifier: %s\n", mod)
+	}
+	if tree.AirportCode != "" {
+		answer += front_pad + fmt.Sprintf("code: %s\n", tree.AirportCode)
 	}
 
 	answer += front_pad + "children:\n"
 	for _, child := range tree.Children {
-		answer += front_pad + disp_format(child, depth+2)
+		answer +=  disp_format(child, depth+2)
 	}
 
 	return answer
@@ -58,13 +61,10 @@ func disp_mod(mod modifier) string {
 	return ""
 }
 
-
 // Resolve one query tree to several constrained ones.
-func resolve(qt query_tree) []query_tree{
+func resolve(qt query_tree) []query_tree {
 	return []query_tree{}
 }
-
-
 
 func test(rw http.ResponseWriter, req *http.Request) {
 	decoder := json.NewDecoder(req.Body)
@@ -89,5 +89,3 @@ func main() {
 	http.HandleFunc("/backend", test)
 	http.ListenAndServe(":8080", nil)
 }
-
-
