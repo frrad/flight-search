@@ -58,6 +58,14 @@ func disp_mod(mod modifier) string {
 	return ""
 }
 
+
+// Resolve one query tree to several constrained ones.
+func resolve(qt query_tree) []query_tree{
+	return []query_tree{}
+}
+
+
+
 func test(rw http.ResponseWriter, req *http.Request) {
 	decoder := json.NewDecoder(req.Body)
 
@@ -81,3 +89,5 @@ func main() {
 	http.HandleFunc("/backend", test)
 	http.ListenAndServe(":8080", nil)
 }
+
+
