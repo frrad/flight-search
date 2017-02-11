@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 
-export default class SearchForm extends React.Component {
+export default class ConditionEntry extends React.Component {
   constructor(props) {
     super(props);
     this.state = {value: ''};

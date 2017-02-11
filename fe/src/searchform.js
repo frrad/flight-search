@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import ConditionEntry from './searchform.js';
+import ConditionEntry from './ConditionEntry.js';
 
 export default class SearchForm extends React.Component {
   constructor(props) {
@@ -27,16 +27,16 @@ export default class SearchForm extends React.Component {
   }
 
   render() {
-    let conditions = []
+    let conditionElements = [<ConditionEntry />]
+    console.log(this.state.conditions)
     this.state.conditions.forEach(function(con) {
         console.log(con)
-        conditions.push(<ConditionEntry />)
-
+        conditionElements.push(<ConditionEntry />)
     })
     return (
       <form onSubmit={this.handleSubmit}>
         <div className="conditionEntry">
-          {conditions}
+          {conditionElements}
           <label>
             Condition:
             <input type="text" value={this.state.value} onChange={this.handleChange} />
