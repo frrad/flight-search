@@ -2,7 +2,6 @@ package querytree
 
 import (
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 )
@@ -31,10 +30,10 @@ type Tree struct {
 }
 
 func (t *Tree) Resolve() []Tree {
-	log.Println("!")
+
 	// True if t is not AND or OR type
 	if len(t.Children) == 0 {
-		log.Println("self")
+
 		return []Tree{t.copy()}
 	}
 
@@ -48,28 +47,31 @@ func (t *Tree) Resolve() []Tree {
 
 	answer := []Tree{}
 	if t.Type == OrType {
+
 		for _, inside := range down {
 			for _, tree := range inside {
 				new_one := Tree{
 					Type:        t.Type,
 					AirportCode: t.AirportCode,
 					Modifier:    t.Modifier,
-					Children:    []Tree{tree},
+					Children:    []Tree{tree.copy()},
 				}
 				answer = append(answer, new_one)
 			}
 		}
-		log.Println("or type")
 
 		return answer
 	}
 
 	// T must be AND type
+
 	for i := 0; i < combos; i++ {
+
 		children := []Tree{}
+		index := i
 		for _, layer := range down {
-			children = append(children, layer[i%len(layer)].copy())
-			i /= len(layer)
+			children = append(children, layer[index%len(layer)].copy())
+			index /= len(layer)
 		}
 
 		new_one := Tree{
@@ -80,7 +82,7 @@ func (t *Tree) Resolve() []Tree {
 		}
 		answer = append(answer, new_one)
 	}
-	log.Println("and type")
+
 	return answer
 }
 
