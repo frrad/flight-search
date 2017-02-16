@@ -8,6 +8,7 @@ class App extends Component {
       <div className="App">
         <div className="App-header">
           <h2>Flight Search</h2>
+          <h3>fuck the user</h3>
         </div>
         <SearchForm />
       </div>

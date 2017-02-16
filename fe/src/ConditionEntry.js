@@ -1,5 +1,6 @@
-import React, { Component } from 'react';
-
+import React from 'react';
+var DatePicker = require('react-datepicker');
+require('react-datepicker/dist/react-datepicker.css');
 export default class ConditionEntry extends React.Component {
   constructor(props) {
     super(props);
@@ -21,7 +22,6 @@ export default class ConditionEntry extends React.Component {
   addCondition(event) {
     console.log('pushed the button: ' + this.state.value);
     event.preventDefault();
-    var condition = <button />;
 
   }
 
@@ -29,8 +29,16 @@ export default class ConditionEntry extends React.Component {
     return (
         <div className="conditionEntry">
           <label>
-            Condition:
+            Conjunction:
             <input type="text" value={this.state.value} onChange={this.handleChange} />
+          </label>
+          <label>
+            Airport:
+            <input type="text" value={this.state.value} onChange={this.handleChange} />
+          </label>
+          <label>
+            Date:
+            <DatePicker />
           </label>
         </div>
     );
