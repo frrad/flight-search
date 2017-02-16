@@ -2,22 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	// "fmt"
 	"log"
 	"net/http"
 	"querytree"
 )
-
-// Resolve one query tree to several constrained ones.
-func resolve(qt querytree.Tree) []querytree.Tree {
-	if len(qt.Children) == 0 {
-		return []querytree.Tree{qt}
-	}
-	// if qt.Type != OrType {
-
-	// }
-
-	return []querytree.Tree{}
-}
 
 func test(rw http.ResponseWriter, req *http.Request) {
 	decoder := json.NewDecoder(req.Body)
@@ -36,6 +25,13 @@ func test(rw http.ResponseWriter, req *http.Request) {
 	defer req.Body.Close()
 
 	log.Println("\n" + t.DispFormat(0))
+	log.Println(len(t.Resolve()))
+	// for _, res := range t.Resolve() {
+	// 	log.Println("asdfasfd")
+	// 	log.Println("\n" + res.DispFormat(0))
+	// }
+	log.Println("test")
+
 }
 
 func main() {
