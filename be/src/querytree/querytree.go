@@ -75,12 +75,41 @@ func (t *Tree) CombineModifier(mod modifier) {
 }
 
 func (t *Tree) Resolve() []Tree {
-	// True if t is AIRPORT type
-	if len(t.Children) == 0 {
+	// Invalid type.
+	if t.Type == "" || t.Type == AndType && len(t.Children) == 0 {
 		return []Tree{t.copy()}
 	}
 
-	// Handle trip type case here
+	// AIRPORT case
+	if t.Type == AirportType {
+		return []Tree{t.copy()}
+	}
+
+	//  TRIP case here. In some ways this is a less general AND...
+	if t.Type == TripType {
+		// log.Println("TRIP TYPE")
+
+		arrivals := t.Arrive.Resolve()
+		departures := t.Depart.Resolve()
+
+		answer := []Tree{}
+		for _, arrive := range arrivals {
+			// log.Println("I = ", i)
+			for _, depart := range departures {
+				// log.Println("J = ", j)
+				entry := t.copyTop()
+
+				arriver := arrive.copy()
+				entry.Arrive = &arriver
+
+				departer := depart.copy()
+				entry.Depart = &departer
+
+				answer = append(answer, entry)
+			}
+		}
+		return answer
+	}
 
 	down := [][]Tree{}
 	combos := 1
@@ -130,12 +159,27 @@ func (t *Tree) Resolve() []Tree {
 	return answer
 }
 
-func (t *Tree) copy() Tree {
+func (t *Tree) Reduce() []Tree {
+	resolved := t.Simplify().Resolve()
+	for i, tree := range resolved {
+		resolved[i] = *tree.Simplify()
+	}
+	return resolved
+}
+
+// Copy top level values
+func (t *Tree) copyTop() Tree {
 	new_one := Tree{
 		Type:        t.Type,
 		AirportCode: t.AirportCode,
 		Modifier:    t.Modifier,
 	}
+	return new_one
+}
+
+// Deep copy
+func (t *Tree) copy() Tree {
+	new_one := t.copyTop()
 	for _, subtree := range t.Children {
 		new_one.Children = append(new_one.Children, subtree.copy())
 	}
@@ -166,6 +210,15 @@ func (tree *Tree) DispFormat(depth int) string {
 	answer += front_pad + "children:\n"
 	for _, child := range tree.Children {
 		answer += child.DispFormat(depth + 2)
+	}
+
+	if tree.Arrive != nil {
+		answer += front_pad + "Arrive:\n"
+		answer += tree.Arrive.DispFormat(depth + 2)
+	}
+	if tree.Depart != nil {
+		answer += front_pad + "Depart:\n"
+		answer += tree.Depart.DispFormat(depth + 2)
 	}
 
 	return answer

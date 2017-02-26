@@ -25,7 +25,7 @@ func test(rw http.ResponseWriter, req *http.Request) {
 	defer req.Body.Close()
 
 	log.Println("\n" + t.DispFormat(0))
-	log.Println(len(t.Resolve()))
+	log.Println(len(t.Reduce()))
 	// for _, res := range t.Resolve() {
 	// 	log.Println("asdfasfd")
 	// 	log.Println("\n" + res.DispFormat(0))
