@@ -27,7 +27,7 @@ var resolve_testcases = []resolve_testcase{
 				Children:    nil,
 			},
 		},
-		Label: "trivial and-tree",
+		Label: "trivial resolve and-tree",
 	},
 	resolve_testcase{
 		InputTree: Tree{
@@ -309,6 +309,366 @@ func TestResolve(test *testing.T) {
 				testcase.Label,
 				testcase.OutputTrees,
 				testcase.InputTree.Resolve(),
+			)
+		}
+	}
+}
+
+var reduce_testcases = []resolve_testcase{
+	resolve_testcase{
+		InputTree: Tree{
+			Type:        AndType,
+			AirportCode: "",
+			Modifier:    modifier{},
+			Children:    nil,
+		},
+		OutputTrees: []Tree{
+			Tree{
+				Type:        AndType,
+				AirportCode: "",
+				Modifier:    modifier{},
+				Children:    nil,
+			},
+		},
+		Label: "trivial and-tree",
+	},
+	resolve_testcase{
+		InputTree: Tree{
+			Type:        AndType,
+			AirportCode: "",
+			Modifier:    modifier{},
+			Children: []Tree{
+				Tree{
+					Type:        AirportType,
+					AirportCode: "ABC",
+					Modifier:    modifier{},
+					Children:    nil,
+				},
+				Tree{
+					Type:        AirportType,
+					AirportCode: "XYZ",
+					Modifier:    modifier{},
+					Children:    nil,
+				},
+			},
+		},
+		OutputTrees: []Tree{
+			Tree{
+				Type:        AndType,
+				AirportCode: "",
+				Modifier:    modifier{},
+				Children: []Tree{
+					Tree{
+						Type:        AirportType,
+						AirportCode: "ABC",
+						Modifier:    modifier{},
+						Children:    nil,
+					},
+					Tree{
+						Type:        AirportType,
+						AirportCode: "XYZ",
+						Modifier:    modifier{},
+						Children:    nil,
+					},
+				},
+			},
+		},
+		Label: "and-tree, two children",
+	},
+	resolve_testcase{
+		InputTree: Tree{
+			Type:        OrType,
+			AirportCode: "",
+			Modifier:    modifier{},
+			Children: []Tree{
+				Tree{
+					Type:        AirportType,
+					AirportCode: "ABC",
+					Modifier:    modifier{},
+					Children:    nil,
+				},
+				Tree{
+					Type:        AirportType,
+					AirportCode: "XYZ",
+					Modifier:    modifier{},
+					Children:    nil,
+				},
+			},
+		},
+		OutputTrees: []Tree{
+			Tree{
+				Type:        AirportType,
+				AirportCode: "ABC",
+				Modifier:    modifier{},
+				Children:    nil,
+			},
+			Tree{
+				Type:        AirportType,
+				AirportCode: "XYZ",
+				Modifier:    modifier{},
+				Children:    nil,
+			},
+		},
+		Label: "or-tree, two children",
+	},
+	resolve_testcase{
+		InputTree: Tree{
+			Type:        AndType,
+			AirportCode: "",
+			Modifier:    modifier{},
+			Children: []Tree{
+				Tree{
+					Type:     OrType,
+					Modifier: modifier{},
+					Children: []Tree{
+						Tree{
+							Type:        AirportType,
+							AirportCode: "ABC",
+							Modifier:    modifier{},
+							Children:    nil,
+						},
+						Tree{
+							Type:        AirportType,
+							AirportCode: "DEF",
+							Modifier:    modifier{},
+							Children:    nil,
+						},
+					},
+				},
+				Tree{
+					Type:     OrType,
+					Modifier: modifier{},
+					Children: []Tree{
+						Tree{
+							Type:        AirportType,
+							AirportCode: "UVW",
+							Modifier:    modifier{},
+							Children:    nil,
+						},
+						Tree{
+							Type:        AirportType,
+							AirportCode: "XYZ",
+							Modifier:    modifier{},
+							Children:    nil,
+						},
+					},
+				},
+			},
+		},
+		OutputTrees: []Tree{
+			Tree{
+				Type:        AndType,
+				AirportCode: "",
+				Children: []Tree{
+					Tree{
+						Type:        AirportType,
+						AirportCode: "ABC",
+						Children:    nil,
+						Modifier:    modifier{},
+					},
+					Tree{
+						Type:        AirportType,
+						AirportCode: "UVW",
+						Children:    nil,
+						Modifier:    modifier{},
+					},
+				},
+				Modifier: modifier{},
+			},
+			Tree{
+				Type:        AndType,
+				AirportCode: "",
+				Children: []Tree{
+					Tree{
+						Type:        AirportType,
+						AirportCode: "DEF",
+						Children:    nil,
+						Modifier:    modifier{},
+					},
+
+					Tree{
+						Type:        AirportType,
+						AirportCode: "UVW",
+						Children:    nil,
+						Modifier:    modifier{},
+					},
+				},
+				Modifier: modifier{},
+			},
+			Tree{
+				Type:        AndType,
+				AirportCode: "",
+				Children: []Tree{
+					Tree{
+						Type:        AirportType,
+						AirportCode: "ABC",
+						Children:    nil,
+						Modifier:    modifier{},
+					},
+					Tree{
+						Type:        AirportType,
+						AirportCode: "XYZ",
+						Children:    nil,
+						Modifier:    modifier{},
+					},
+				},
+				Modifier: modifier{},
+			},
+			Tree{
+				Type:        AndType,
+				AirportCode: "",
+				Children: []Tree{
+					Tree{
+						Type:        AirportType,
+						AirportCode: "DEF",
+						Children:    nil,
+						Modifier:    modifier{},
+					},
+					Tree{
+						Type:        AirportType,
+						AirportCode: "XYZ",
+						Children:    nil,
+						Modifier:    modifier{},
+					},
+				},
+				Modifier: modifier{},
+			},
+		},
+		Label: "several levels",
+	},
+	resolve_testcase{
+		InputTree: Tree{
+			Type:        TripType,
+			AirportCode: "",
+			Modifier:    modifier{},
+			Depart: &Tree{
+
+				Type:     OrType,
+				Modifier: modifier{},
+				Children: []Tree{
+					Tree{
+						Type:        AirportType,
+						AirportCode: "ABC",
+						Modifier:    modifier{},
+						Children:    nil,
+					},
+					Tree{
+						Type:        AirportType,
+						AirportCode: "DEF",
+						Modifier:    modifier{},
+						Children:    nil,
+					},
+				},
+			},
+			Arrive: &Tree{
+				Type:     OrType,
+				Modifier: modifier{},
+				Children: []Tree{
+					Tree{
+						Type:        AirportType,
+						AirportCode: "UVW",
+						Modifier:    modifier{},
+						Children:    nil,
+					},
+					Tree{
+						Type:        AirportType,
+						AirportCode: "XYZ",
+						Modifier:    modifier{},
+						Children:    nil,
+					},
+				},
+			},
+		},
+		OutputTrees: []Tree{
+			Tree{
+				Type:        TripType,
+				AirportCode: "",
+				Depart: &Tree{
+					Type:        AirportType,
+					AirportCode: "ABC",
+					Children:    nil,
+					Modifier:    modifier{},
+				},
+				Arrive: &Tree{
+					Type:        AirportType,
+					AirportCode: "UVW",
+					Children:    nil,
+					Modifier:    modifier{},
+				},
+				Modifier: modifier{},
+			},
+			Tree{
+				Type:        TripType,
+				AirportCode: "",
+				Arrive: &Tree{
+					Type:        AirportType,
+					AirportCode: "UVW",
+					Children:    nil,
+					Modifier:    modifier{},
+				},
+				Depart: &Tree{
+					Type:        AirportType,
+					AirportCode: "DEF",
+					Children:    nil,
+					Modifier:    modifier{},
+				},
+				Modifier: modifier{},
+			},
+			Tree{
+				Type:        TripType,
+				AirportCode: "",
+				Arrive: &Tree{
+					Type:        AirportType,
+					AirportCode: "XYZ",
+					Children:    nil,
+					Modifier:    modifier{},
+				},
+				Depart: &Tree{
+					Type:        AirportType,
+					AirportCode: "ABC",
+					Children:    nil,
+					Modifier:    modifier{},
+				},
+				Modifier: modifier{},
+			},
+			Tree{
+				Type:        TripType,
+				AirportCode: "",
+				Arrive: &Tree{
+					Type:        AirportType,
+					AirportCode: "XYZ",
+					Children:    nil,
+					Modifier:    modifier{},
+				},
+				Depart: &Tree{
+					Type:        AirportType,
+					AirportCode: "DEF",
+					Children:    nil,
+					Modifier:    modifier{},
+				},
+				Modifier: modifier{},
+			},
+		},
+		Label: "well formed, several levels",
+	},
+}
+
+func TestReduce(test *testing.T) {
+	for _, testcase := range reduce_testcases {
+		if !reflect.DeepEqual(testcase.InputTree.Reduce(),
+			testcase.OutputTrees) {
+
+			actually := testcase.InputTree.Reduce()
+			actual_message := ""
+			for _, actual_tree := range actually {
+				actual_message += actual_tree.DispFormat(0)
+				actual_message += "\n"
+			}
+
+			test.Errorf("label: %s\nexpected %v\nFound    %v",
+				testcase.Label,
+				testcase.OutputTrees,
+				actual_message,
 			)
 		}
 	}
