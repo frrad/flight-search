@@ -2,6 +2,7 @@ package querytree
 
 import (
 	"fmt"
+	//	"log"
 	"strconv"
 	"strings"
 )
@@ -9,10 +10,10 @@ import (
 type node_type string
 
 const (
-	OrType     node_type = "OR"
-	AndType    node_type = "AND"
-	ArriveType node_type = "ARRIVE"
-	DepartType node_type = "DEPART"
+	OrType      node_type = "OR"
+	AndType     node_type = "AND"
+	AirportType node_type = "AIRPORT"
+	TripType    node_type = "TRIP"
 )
 
 type modifier struct {
@@ -20,22 +21,66 @@ type modifier struct {
 }
 
 type Tree struct {
-	Type node_type
+	Type     node_type
+	Modifier modifier
 
-	// Only filled if ARRIVE or DEPART type
+	// Only filled if AIRPORT type
 	AirportCode string
 
+	// Filled if and only if TRIP type
+	Depart *Tree
+	Arrive *Tree
+
+	// Filled if and only if AND or OR type
 	Children []Tree
-	Modifier modifier
+}
+
+func (t *Tree) Simplify() *Tree {
+
+	// The leaf case
+	if t.Type == AirportType {
+		return t
+	}
+
+	if len(t.Children) == 1 {
+		// must be AND or OR type
+		child := t.Children[0].Simplify()
+		child.CombineModifier(t.Modifier)
+
+		return child
+	}
+
+	if len(t.Children) > 1 {
+		// must be AND or OR type
+		for i, child := range t.Children {
+			t.Children[i] = *child.Simplify()
+		}
+		return t
+	}
+
+	// Must be TRIP type
+	if t.Arrive != nil {
+		t.Arrive = t.Arrive.Simplify()
+	}
+	if t.Depart != nil {
+		t.Depart = t.Depart.Simplify()
+	}
+	return t
+
+}
+
+// Adds given modifier to t
+func (t *Tree) CombineModifier(mod modifier) {
+	t.Modifier.PriceAdjustment += mod.PriceAdjustment
 }
 
 func (t *Tree) Resolve() []Tree {
-
-	// True if t is not AND or OR type
+	// True if t is AIRPORT type
 	if len(t.Children) == 0 {
-
 		return []Tree{t.copy()}
 	}
+
+	// Handle trip type case here
 
 	down := [][]Tree{}
 	combos := 1
@@ -64,7 +109,6 @@ func (t *Tree) Resolve() []Tree {
 	}
 
 	// T must be AND type
-
 	for i := 0; i < combos; i++ {
 
 		children := []Tree{}
@@ -94,6 +138,15 @@ func (t *Tree) copy() Tree {
 	}
 	for _, subtree := range t.Children {
 		new_one.Children = append(new_one.Children, subtree.copy())
+	}
+
+	if t.Depart != nil {
+		depart := t.Depart.copy()
+		new_one.Depart = &depart
+	}
+	if t.Arrive != nil {
+		arrive := t.Arrive.copy()
+		new_one.Arrive = &arrive
 	}
 	return new_one
 }
