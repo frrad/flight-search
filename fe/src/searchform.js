@@ -1,5 +1,6 @@
 import React from 'react';
 import ConditionEntry from './ConditionEntry.js';
+import SearchTree from './SearchTree.js';
 
 export default class SearchForm extends React.Component {
   constructor(props) {
@@ -17,24 +18,19 @@ export default class SearchForm extends React.Component {
   }
 
   onFieldChange(event) {
-    console.log(event.target.name)
-    console.log(event.target)
-    console.log(this.state.conditionData[event.target.name.slice(-1)])
     this.state.conditionData[event.target.name.slice(-1)][event.target.name.slice(0,-2)] = event.target.value
   }
 
   handleSubmit(event) {
-    console.log('A thing was submitted: ' + this.state.value);
     event.preventDefault();
     let conditionList = [];
     for (var i = this.state.conditions.length - 1; i >= 0; i--) {
       conditionList.push(this.state.conditions[i].state)
     }
-    console.log(this.state.conditionData)
+    console.log(this.state.conditionData) //this should post
   }
 
   addCondition(event) {
-    console.log('pushed the button: ' + this.state.value);
     event.preventDefault();
     const key = this.state.conditions.length.toString();
     var condition = <ConditionEntry key={key} num={key} onFieldChange={this.onFieldChange}/>;
@@ -45,13 +41,16 @@ export default class SearchForm extends React.Component {
   }
 
   render() {
-    console.log(this.state.conditions)
     return (
-      <form onSubmit={this.handleSubmit}>
-        {this.state.conditions}
-        <button type="button" onClick={this.addCondition}>Add Condition</button>
-        <input type="submit" value="Submit" />
-      </form>
+      <div className="searchForm">
+        <form onSubmit={this.handleSubmit}>
+          {this.state.conditions}
+          <button type="button" onClick={this.addCondition}>Add Condition</button>
+          <input type="submit" value="Submit" />
+        </form>
+
+        <SearchTree treeData={this.state.conditions} />
+      </div>
     );
   }
 }

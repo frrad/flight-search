@@ -3,3 +3,11 @@ body {
   padding: 0;
   font-family: sans-serif;
 }
+
+.treeNode {
+    background-color:blue;
+    margin:auto;
+    width:10%;
+    height:40px;
+    display: block;
+}
