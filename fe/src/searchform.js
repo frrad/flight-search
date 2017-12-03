@@ -1,4 +1,5 @@
 import React from 'react';
+import StateStore from './store.js';
 import ConditionEntry from './ConditionEntry.js';
 import SearchTree from './SearchTree.js';
 
@@ -6,6 +7,8 @@ export default class SearchForm extends React.Component {
   constructor(props) {
     super(props);
     this.state = {value: '', conditions: [], conditionData: {}};
+    this.store = new StateStore;
+    this.store.fetchSearch(); //test take out
 
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -49,7 +52,7 @@ export default class SearchForm extends React.Component {
           <input type="submit" value="Submit" />
         </form>
 
-        <SearchTree treeData={this.state.conditions} />
+        <SearchTree treeData={this.state.conditionData} />
       </div>
     );
   }
