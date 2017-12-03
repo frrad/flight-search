@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
-import SearchForm from './searchform.js';
+import SearchForm from './SearchForm.js';
+import ResultsList from './ResultsList.js';
+import SearchTree from './SearchTree.js';
 import './App.css';
 
 class App extends Component {
@@ -11,6 +13,7 @@ class App extends Component {
           <h3></h3>
         </div>
         <SearchForm />
+        <ResultsList />
       </div>
     );
   }
