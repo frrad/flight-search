@@ -2,10 +2,10 @@ package main
 
 import (
 	"encoding/json"
-	// "fmt"
 	"log"
 	"net/http"
-	"querytree"
+
+	"github.com/frrad/flight-search/flight-backend/querytree"
 )
 
 func test(rw http.ResponseWriter, req *http.Request) {
