@@ -2,9 +2,12 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
+	"os"
 
+	"github.com/frrad/flight-search/flight-backend/qpx"
 	"github.com/frrad/flight-search/flight-backend/querytree"
 )
 
@@ -35,6 +38,14 @@ func test(rw http.ResponseWriter, req *http.Request) {
 }
 
 func main() {
-	http.HandleFunc("/backend", test)
-	http.ListenAndServe(":8080", nil)
+	finder := qpx.NewQPXFinder(os.Getenv("QPXAPIKEY"))
+	fmt.Println(finder.Find(
+		qpx.LegSpec{
+			Origin:      "SFO",
+			Destination: "LAX",
+			Date:        "2018-04-01",
+		}))
+
+	// http.HandleFunc("/backend", test)
+	// http.ListenAndServe(":8080", nil)
 }

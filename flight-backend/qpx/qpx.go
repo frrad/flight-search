@@ -3,131 +3,138 @@ package qpx
 import (
 	"bytes"
 	"encoding/json"
-	//	"fmt"
+	"fmt"
 	"net/http"
-	"os"
+	"strconv"
 )
 
-//                                 _
-//  _ __ ___  __ _ _   _  ___  ___| |_
-// | '__/ _ \/ _` | | | |/ _ \/ __| __|
-// | | |  __/ (_| | |_| |  __/\__ \ |_
-// |_|  \___|\__, |\__,_|\___||___/\__|
-//              |_|
-
-// Just a wrapper for qpxRequest
-type request struct {
-	Request qpxRequest `json:"request"`
+type QPXFinder struct {
+	apiKey string
 }
 
-type qpxRequest struct {
-	Passengers passengerCounts `json:"passengers"`
-	Slice      []sliceInput    `json:"slice"`
-	Solutions  int             `json:"solutions"`
+func NewQPXFinder(key string) *QPXFinder {
+	return &QPXFinder{
+		apiKey: key,
+	}
 }
 
-type sliceInput struct {
-	Origin      string `json:"origin"`
-	Destination string `json:"destination"`
-	Date        string `json:"date"`
+type LegSpec struct {
+	Origin      string
+	Destination string
+	Date        string // "YYYY-MM-DD"
 }
 
-type passengerCounts struct {
-	AdultCount int `json:"adultCount"`
+type Leg struct {
+	Price    int // In pennies USD
+	Segments []Segment
+	//	fake     string
 }
 
-//  _ __ ___  ___ _ __   ___  _ __  ___  ___
-// | '__/ _ \/ __| '_ \ / _ \| '_ \/ __|/ _ \
-// | | |  __/\__ \ |_) | (_) | | | \__ \  __/
-// |_|  \___||___/ .__/ \___/|_| |_|___/\___|
-//               |_|
-
-type qpxResponse struct {
-	Kind  string `json:"kind"`
-	Trips trips  `json:"trips"`
+type Segment struct {
+	Airlines      string
+	FlightNumber  string
+	ArrivalTime   string
+	DepartureTime string
+	Origin        string
+	Destination   string
 }
 
-type trips struct {
-	Kind       string       `json:"kind"`
-	RequestId  string       `json:"requestId"`
-	Data       data         `json:"data"`
-	TripOption []tripOption `json:"tripOption"`
-}
-
-type data struct {
-	Kind string `json:"kind"`
-}
-
-type tripOption struct {
-	Kind      string  `json:"kind"`
-	SaleTotal string  `json:"saleTotal"`
-	Id        string  `json:"id"`
-	Slice     []slice `json:"slice"`
-}
-
-type slice struct {
-	Kind     string    `json:"kind"`
-	Duration int       `json:"duration"`
-	Segment  []segment `json:"segment"`
-}
-
-type segment struct {
-	Kind     string `json:"kind"`
-	Duration int    `json:"duration"`
-	Flight   flight `json:"flight"`
-	Leg      []leg  `json:"leg"`
-}
-
-type leg struct {
-	ArrivalTime   string `json:"arrivalTime"`
-	DepartureTime string `json:"departureTime"`
-	Origin        string `json:"origin"`
-	Destination   string `json:"destination"`
-}
-
-type flight struct {
-	Carrier string `json:"carrier"`
-	Number  string `json:"number"`
-}
-
-func testRequest() request {
-	var answer request
-	answer.Request.Solutions = 10
-	answer.Request.Passengers.AdultCount = 1
-	answer.Request.Slice = []sliceInput{sliceInput{}}
-	answer.Request.Slice[0].Origin = "MCO"
-	answer.Request.Slice[0].Destination = "DAY"
-	answer.Request.Slice[0].Date = "2017-09-01"
-	return answer
-}
-
-func getAPIKey() string {
-	return os.Getenv("QPXAPIKEY")
-}
-
-func CallQPX() string {
-	requestJson, err := json.Marshal(testRequest())
-	if err != nil {
-		return "error"
+func (f *QPXFinder) Find(spec LegSpec) ([]Leg, error) {
+	req := qpxRequest{
+		Solutions: 10,
+		Passengers: passengerCounts{
+			AdultCount: 1,
+		},
+		Slice: []sliceInput{
+			{
+				Origin:      spec.Origin,
+				Destination: spec.Destination,
+				Date:        spec.Date,
+			},
+		},
 	}
 
-	response, err := http.Post("https://www.googleapis.com/qpxExpress/v1/trips/search"+"?key="+getAPIKey(), "application/json", bytes.NewBuffer(requestJson))
+	wrapped := requestWrapper{
+		Request: req,
+	}
+
+	resp, err := f.callQPX(wrapped)
+	if err != nil {
+		return nil, err
+	}
+
+	return interpretResp(resp)
+}
+
+func interpretResp(resp qpxResponse) ([]Leg, error) {
+	ans := make([]Leg, len(resp.Trips.TripOption))
+	for i, option := range resp.Trips.TripOption {
+		segmentsFromTrip := make([]Segment, 0)
+
+		costStr := option.SaleTotal
+		if costStr[:3] != "USD" {
+			return nil, fmt.Errorf("Not in USD: %s", costStr[:3])
+		}
+
+		d, err := strconv.ParseFloat(costStr[3:], 64)
+		if err != nil {
+			return nil, fmt.Errorf("Trouble parsing cost: %s", costStr[3:])
+		}
+
+		for _, s := range option.Slice {
+			for _, seg := range s.Segment {
+				flight := seg.Flight
+				for _, leg := range seg.Leg {
+
+					segmentsFromTrip = append(segmentsFromTrip, Segment{
+						Airlines:      flight.Carrier,
+						FlightNumber:  flight.Number,
+						ArrivalTime:   leg.ArrivalTime,
+						DepartureTime: leg.DepartureTime,
+						Origin:        leg.Origin,
+						Destination:   leg.Destination,
+					})
+
+				}
+			}
+		}
+
+		//		asdf, _ := json.Marshal(option)
+		ans[i] = Leg{
+			Price:    int(d * 100),
+			Segments: segmentsFromTrip,
+			//			fake:     string(asdf),
+		}
+	}
+
+	return ans, nil
+}
+
+func (f *QPXFinder) callQPX(req requestWrapper) (qpxResponse, error) {
+	var resp qpxResponse
+
+	requestJson, err := json.Marshal(req)
+	if err != nil {
+		return resp, err
+	}
+
+	response, err := http.Post("https://www.googleapis.com/qpxExpress/v1/trips/search"+"?key="+f.apiKey, "application/json", bytes.NewBuffer(requestJson))
 
 	if err != nil {
-		return "error posting request"
+		return resp, err
 	}
 
 	if response.StatusCode != 200 {
-		return "error"
+		return resp, fmt.Errorf("Error! QPX says: %d", response.StatusCode)
 	}
 
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(response.Body)
-	// newStr := buf.String()
 
-	var response_coded qpxResponse
-	err = json.Unmarshal(buf.Bytes(), &response_coded)
+	err = json.Unmarshal(buf.Bytes(), &resp)
+	if err != nil {
+		return resp, err
+	}
 
-	answer, err := json.Marshal(response_coded)
-	return string(answer)
+	return resp, nil
 }
