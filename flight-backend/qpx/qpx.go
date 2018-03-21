@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 type QPXFinder struct {
@@ -19,6 +20,12 @@ func NewQPXFinder(key string) *QPXFinder {
 }
 
 type LegSpec struct {
+	Origin      string
+	Destination string
+	Dates       []string // "YYYY-MM-DD"
+}
+
+type qpxSpec struct {
 	Origin      string
 	Destination string
 	Date        string // "YYYY-MM-DD"
@@ -39,7 +46,29 @@ type Segment struct {
 	Destination   string
 }
 
+func (l LegSpec) Hash() string {
+	return strings.Join(append(l.Dates, l.Origin, l.Destination), "$")
+}
+
 func (f *QPXFinder) Find(spec LegSpec) ([]Leg, error) {
+	ans := []Leg{}
+	for _, date := range spec.Dates {
+		oneDay, err := f.findOneDate(
+			qpxSpec{
+				Origin:      spec.Origin,
+				Destination: spec.Destination,
+				Date:        date,
+			})
+		if err != nil {
+			return ans, err
+		}
+		ans = append(ans, oneDay...)
+	}
+	return ans, nil
+}
+
+func (f *QPXFinder) findOneDate(spec qpxSpec) ([]Leg, error) {
+
 	req := qpxRequest{
 		Solutions: 10,
 		Passengers: passengerCounts{
