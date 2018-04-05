@@ -15,8 +15,8 @@ import (
 func queryHandler(w http.ResponseWriter, req *http.Request) {
 	decoder := json.NewDecoder(req.Body)
 
-	var t querydag.DAG
-	err := decoder.Decode(&t)
+	var query querydag.DAG
+	err := decoder.Decode(&query)
 
 	if err != nil {
 		log.Println("\n")
@@ -30,7 +30,7 @@ func queryHandler(w http.ResponseWriter, req *http.Request) {
 	finder := qpx.NewQPXFinder(os.Getenv("QPXAPIKEY"))
 	planner := trip.NewPlanner(finder)
 
-	sols := t.AllSolutions()
+	sols := query.AllSolutions()
 	options := planner.ListOptions(sols)
 	response, err := json.Marshal(options)
 
@@ -42,8 +42,6 @@ func queryHandler(w http.ResponseWriter, req *http.Request) {
 }
 
 func main() {
-
 	http.HandleFunc("/backend", queryHandler)
 	http.ListenAndServe(":8080", nil)
-
 }

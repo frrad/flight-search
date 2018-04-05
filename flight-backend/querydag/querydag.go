@@ -25,6 +25,7 @@ type Flight struct {
 
 func (dag DAG) Viz() string {
 	ans := "digraph {\n"
+	ans += "  rankdir=LR\n"
 	for i, n := range dag.Nodes {
 		shape := "oval"
 		if n.IsAirport {

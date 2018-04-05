@@ -14,11 +14,12 @@ func NewPlanner(f *qpx.QPXFinder) *TripPlanner {
 
 // Choose an option for each leg
 type TripOptions [][]qpx.Leg
+type TripSpec []qpx.LegSpec
 
-func (tp *TripPlanner) ListOptions(tripSpecs [][]qpx.LegSpec) []TripOptions {
+func (tp *TripPlanner) ListOptions(tripSpecs []TripSpec) []TripOptions {
 	ans := make([]TripOptions, len(tripSpecs))
-
 	memo := make(map[string][]qpx.Leg)
+
 	for i, trip := range tripSpecs {
 
 		ans[i] = make([][]qpx.Leg, len(trip))
