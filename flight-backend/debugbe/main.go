@@ -199,7 +199,7 @@ func drawGraph(dag querydag.DAG) string {
 	filename := "/tmp/23590.dot"
 	ioutil.WriteFile(filename, []byte(filestring), 0644)
 
-	imagePath := "/home/frederick/Downloads/image.png"
+	imagePath := "/tmp/45265.png"
 	renderCmd := exec.Command("dot", "-Tpng", filename,
 		"-o", imagePath)
 	renderCmd.Run()
