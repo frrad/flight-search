@@ -31,14 +31,21 @@ func queryHandler(w http.ResponseWriter, req *http.Request) {
 	planner := trip.NewPlanner(finder)
 
 	sols := query.AllSolutions()
-	options := planner.ListOptions(sols)
-	response, err := json.Marshal(options)
 
-	if err == nil {
-		fmt.Fprintf(w, "%s", string(response))
-	} else {
+	options, err := planner.ListOptions(sols)
+	if err != nil {
 		fmt.Fprintf(w, "ERROR")
+		return
 	}
+
+	response, err := json.Marshal(options)
+	if err != nil {
+		fmt.Fprintf(w, "ERROR")
+		return
+	}
+
+	fmt.Fprintf(w, "%s", string(response))
+
 }
 
 func main() {

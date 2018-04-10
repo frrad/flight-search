@@ -4,10 +4,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 )
+
+type TripSpec []LegSpec
 
 type QPXFinder struct {
 	apiKey string
@@ -40,8 +44,8 @@ type Leg struct {
 type Segment struct {
 	Airlines      string
 	FlightNumber  string
-	ArrivalTime   string
-	DepartureTime string
+	ArrivalTime   time.Time
+	DepartureTime time.Time
 	Origin        string
 	Destination   string
 }
@@ -115,11 +119,16 @@ func interpretResp(resp qpxResponse) ([]Leg, error) {
 				flight := seg.Flight
 				for _, leg := range seg.Leg {
 
+					layout := "2006-01-02T15:04-07:00"
+
+					parsedArrival, _ := time.Parse(layout, leg.ArrivalTime)
+					parsedDeparture, _ := time.Parse(layout, leg.DepartureTime)
+
 					segmentsFromTrip = append(segmentsFromTrip, Segment{
 						Airlines:      flight.Carrier,
 						FlightNumber:  flight.Number,
-						ArrivalTime:   leg.ArrivalTime,
-						DepartureTime: leg.DepartureTime,
+						ArrivalTime:   parsedArrival,
+						DepartureTime: parsedDeparture,
 						Origin:        leg.Origin,
 						Destination:   leg.Destination,
 					})
@@ -147,18 +156,22 @@ func (f *QPXFinder) callQPX(req requestWrapper) (qpxResponse, error) {
 		return resp, err
 	}
 
+	log.Println("making QPX request")
+	log.Println(requestJson)
+
 	response, err := http.Post("https://www.googleapis.com/qpxExpress/v1/trips/search"+"?key="+f.apiKey, "application/json", bytes.NewBuffer(requestJson))
 
 	if err != nil {
 		return resp, err
 	}
 
-	if response.StatusCode != 200 {
-		return resp, fmt.Errorf("Error! QPX says: %d", response.StatusCode)
-	}
-
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(response.Body)
+
+	if response.StatusCode != 200 {
+		log.Println(buf.String())
+		return resp, fmt.Errorf("Error! QPX says: %d", response.StatusCode)
+	}
 
 	err = json.Unmarshal(buf.Bytes(), &resp)
 	if err != nil {

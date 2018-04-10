@@ -42,10 +42,10 @@ func (dag DAG) Viz() string {
 	return ans
 }
 
-func (dag DAG) AllSolutions() [][]qpx.LegSpec {
+func (dag DAG) AllSolutions() []qpx.TripSpec {
 	paths := dag.pathsFromI(0)
 
-	specs := [][]qpx.LegSpec{}
+	specs := []qpx.TripSpec{}
 	for _, path := range paths {
 		specs = append(specs, dag.pathToSpecs(path))
 	}
