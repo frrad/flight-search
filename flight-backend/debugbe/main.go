@@ -55,7 +55,8 @@ Error unmarshalling json:
 `
 
 	defaultDAG := `
-{"Nodes":[{"IsAirport":false,"Name":"start","FlightsOut":[{"ToNode":1,"Dates":null},{"ToNode":2,"Dates":null}]},{"IsAirport":true,"Name":"SFO","FlightsOut":[{"ToNode":3,"Dates":["2018-04-15"]}]},{"IsAirport":true,"Name":"OAK","FlightsOut":[{"ToNode":3,"Dates":["2018-04-16"]}]},{"IsAirport":false,"Name":"fake","FlightsOut":[{"ToNode":4,"Dates":null},{"ToNode":5,"Dates":null}]},{"IsAirport":true,"Name":"MCO","FlightsOut":[{"ToNode":6,"Dates":null}]},{"IsAirport":true,"Name":"MEL","FlightsOut":[{"ToNode":6,"Dates":null}]},{"IsAirport":false,"Name":"end","FlightsOut":null}]}`
+{"Nodes":[{"IsAirport":false,"Name":"start","FlightsOut":[{"ToNode":1,"Dates":null},{"ToNode":2,"Dates":null}]},{"IsAirport":true,"Name":"SFO","FlightsOut":[{"ToNode":3,"Dates":["2018-04-15"]}]},{"IsAirport":true,"Name":"OAK","FlightsOut":[{"ToNode":3,"Dates":["2018-04-16"]}]},{"IsAirport":false,"Name":"<flight>","FlightsOut":[{"ToNode":4,"Dates":null},{"ToNode":5,"Dates":null}]},{"IsAirport":true,"Name":"MCO","FlightsOut":[{"ToNode":6,"Dates":null}]},{"IsAirport":true,"Name":"MIA","FlightsOut":[{"ToNode":6,"Dates":null}]},{"IsAirport":false,"Name":"<flight>","FlightsOut":[{"ToNode":7,"Dates":["2018-04-20"]}]},{"IsAirport":true,"Name":"JFK","FlightsOut":[{"ToNode":8,"Dates":null}]},{"IsAirport":false,"Name":"end","FlightsOut":[]}]}
+`
 
 	tmpl := template.New("debugfe.html")
 	tmpl, err := tmpl.Parse(page)
@@ -93,7 +94,7 @@ Error unmarshalling json:
 	if err == nil {
 		data.BEResponseHTML = formatResponse(beResp)
 	} else {
-		data.BEResponseHTML = fmt.Sprintf("Error querying backend:\n<br>\n%+v", err)
+		data.BEResponseHTML = fmt.Sprintf("Error querying backend:\n<br>\n%+v<br>\n%s", err, beResp)
 	}
 
 	err = tmpl.Execute(w, data)
@@ -129,6 +130,7 @@ func queryBackend(dag querydag.DAG) ([]trip.TripOption, error) {
 
 	err = json.Unmarshal(buf.Bytes(), &beresp)
 	if err != nil {
+		log.Printf("Error: Can't unmarshal response:\n%s", buf.String())
 		return nil, err
 	}
 
@@ -136,7 +138,7 @@ func queryBackend(dag querydag.DAG) ([]trip.TripOption, error) {
 }
 
 func formatResponse(options []trip.TripOption) string {
-	log.Printf("Formatting Response...\n%+v", options)
+	log.Printf("Formatting Response...\n")
 
 	ans := "<table>\n"
 

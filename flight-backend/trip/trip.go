@@ -40,6 +40,7 @@ func (tp *TripPlanner) ListOptions(tripSpecs []qpx.TripSpec) ([]TripOption, erro
 					memo[leg.Hash()] = lookup
 					ans[i][j] = memo[leg.Hash()]
 				} else {
+					log.Printf("error looking up leg\nleg:%+v\nerror:%+v", leg, err)
 					return nil, err
 				}
 			}

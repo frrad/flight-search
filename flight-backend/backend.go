@@ -34,13 +34,13 @@ func queryHandler(w http.ResponseWriter, req *http.Request) {
 
 	options, err := planner.ListOptions(sols)
 	if err != nil {
-		fmt.Fprintf(w, "ERROR")
+		fmt.Fprintf(w, "ERROR listing options")
 		return
 	}
 
 	response, err := json.Marshal(options)
 	if err != nil {
-		fmt.Fprintf(w, "ERROR")
+		fmt.Fprintf(w, "ERROR marshalling response")
 		return
 	}
 
