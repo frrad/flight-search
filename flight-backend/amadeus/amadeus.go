@@ -21,14 +21,40 @@ func NewAmadeusFinder(key string) *AmadeusLegFinder {
 }
 
 func (a *AmadeusLegFinder) Find(spec legfinder.LegSpec) ([]legfinder.Leg, error) {
+	ans := []legfinder.Leg{}
+
 	for _, date := range spec.Dates {
-		a.callAPI(spec.Origin, spec.Destination, date)
+		response, err := a.callAPI(spec.Origin, spec.Destination, date)
+		if err != nil {
+			return nil, err
+		}
+		if response.Currency != "USD" {
+			log.Println("non-us currency detected", response.Currency)
+			return nil, fmt.Errorf("non-USD == wat do")
+		}
+
+		legs, err := legsFromAmadeusResults(response.Results)
+		if err != nil {
+			return nil, err
+		}
+		ans = append(ans, legs...)
+
 	}
 
-	return nil, nil
+	return ans, nil
 }
 
-func (a *AmadeusLegFinder) callAPI(origin, destination, date string) error {
+func legsFromAmadeusResults(results []amadeusResult) ([]legfinder.Leg, error) {
+	// todo: finish funciton
+
+	ans := []legfinder.Leg{}
+	for _, result := range results {
+		price := result.Fare.TotalPrice // dollars.cents string
+	}
+	return ans, nil
+}
+
+func (a *AmadeusLegFinder) callAPI(origin, destination, date string) (*amadeusResponse, error) {
 	log.Println(origin, destination, date)
 
 	urlTemplate := "https://api.sandbox.amadeus.com/v1.2/flights/low-fare-search?apikey=%s&origin=%s&destination=%s&departure_date=%s"
@@ -37,30 +63,29 @@ func (a *AmadeusLegFinder) callAPI(origin, destination, date string) error {
 	resp, err := http.Get(url)
 	if err != nil {
 		log.Println("error calling Amadeus", err)
-		return err
+		return nil, err
 	}
 
 	if resp.StatusCode != 200 {
 		log.Println("Amadeus returned code", resp.StatusCode)
-		return fmt.Errorf("Amadeus returned code %d", resp.StatusCode)
+		return nil, fmt.Errorf("Amadeus returned code %d", resp.StatusCode)
 	}
 
 	defer resp.Body.Close()
 	contents, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Println("error reading response body", err)
-		return err
+		return nil, err
 	}
 
 	var result amadeusResponse
 	err = json.Unmarshal(contents, &result)
 	if err != nil {
 		log.Println("error unmarshalling", string(contents))
-		return err
+		return nil, err
 	}
-	log.Println(result)
 
-	return nil
+	return &result, nil
 }
 
 type amadeusResponse struct {
