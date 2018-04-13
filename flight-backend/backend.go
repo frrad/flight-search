@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/frrad/flight-search/flight-backend/qpx"
+	"github.com/frrad/flight-search/flight-backend/amadeus"
 	"github.com/frrad/flight-search/flight-backend/querydag"
 	"github.com/frrad/flight-search/flight-backend/trip"
 )
@@ -27,7 +27,7 @@ func queryHandler(w http.ResponseWriter, req *http.Request) {
 
 	defer req.Body.Close()
 
-	finder := qpx.NewQPXFinder(os.Getenv("AMADEUSKEY"))
+	finder := amadeus.NewAmadeusFinder(os.Getenv("AMADEUSKEY"))
 	planner := trip.NewPlanner(finder)
 
 	sols := query.AllSolutions()
@@ -50,5 +50,8 @@ func queryHandler(w http.ResponseWriter, req *http.Request) {
 
 func main() {
 	http.HandleFunc("/backend", queryHandler)
-	http.ListenAndServe(":8080", nil)
+	err := http.ListenAndServe(":8080", nil)
+	if err != nil {
+		log.Println(err)
+	}
 }
