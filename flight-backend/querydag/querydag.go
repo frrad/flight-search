@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/frrad/flight-search/flight-backend/qpx"
+	"github.com/frrad/flight-search/flight-backend/legfinder"
 )
 
 type DAG struct {
@@ -42,10 +42,10 @@ func (dag DAG) Viz() string {
 	return ans
 }
 
-func (dag DAG) AllSolutions() []qpx.TripSpec {
+func (dag DAG) AllSolutions() []legfinder.TripSpec {
 	paths := dag.pathsFromI(0)
 
-	specs := []qpx.TripSpec{}
+	specs := []legfinder.TripSpec{}
 	for _, path := range paths {
 		specs = append(specs, dag.pathToSpecs(path))
 	}
@@ -53,11 +53,11 @@ func (dag DAG) AllSolutions() []qpx.TripSpec {
 }
 
 // Extract leg specifications from a path through DAG
-func (dag DAG) pathToSpecs(path []int) []qpx.LegSpec {
-	specs := []qpx.LegSpec{}
+func (dag DAG) pathToSpecs(path []int) []legfinder.LegSpec {
+	specs := []legfinder.LegSpec{}
 
 	state := "start"
-	thisSpec := qpx.LegSpec{}
+	thisSpec := legfinder.LegSpec{}
 	for i := 0; i < len(path); i += 2 {
 		nodeIndex, flightIndex := path[i], path[i+1]
 		node := dag.Nodes[nodeIndex]
@@ -91,7 +91,7 @@ func (dag DAG) pathToSpecs(path []int) []qpx.LegSpec {
 			if node.IsAirport {
 				thisSpec.Destination = node.Name
 				specs = append(specs, thisSpec)
-				thisSpec = qpx.LegSpec{Origin: node.Name}
+				thisSpec = legfinder.LegSpec{Origin: node.Name}
 				if len(flight.Dates) > 0 {
 					thisSpec.Dates = append([]string{}, flight.Dates...)
 					state = "accepting-dates"

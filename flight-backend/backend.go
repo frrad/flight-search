@@ -27,7 +27,7 @@ func queryHandler(w http.ResponseWriter, req *http.Request) {
 
 	defer req.Body.Close()
 
-	finder := qpx.NewQPXFinder(os.Getenv("QPXAPIKEY"))
+	finder := qpx.NewQPXFinder(os.Getenv("AMADEUSKEY"))
 	planner := trip.NewPlanner(finder)
 
 	sols := query.AllSolutions()

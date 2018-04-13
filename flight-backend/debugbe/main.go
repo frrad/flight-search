@@ -10,7 +10,7 @@ import (
 	"os/exec"
 	"text/template"
 
-	"github.com/frrad/flight-search/flight-backend/qpx"
+	"github.com/frrad/flight-search/flight-backend/legfinder"
 	"github.com/frrad/flight-search/flight-backend/querydag"
 	"github.com/frrad/flight-search/flight-backend/trip"
 )
@@ -163,7 +163,7 @@ func formatTrip(trip trip.TripOption) string {
 	return ans + "</tr>"
 }
 
-func formatLeg(leg qpx.Leg) string {
+func formatLeg(leg legfinder.Leg) string {
 	ans := "<table>\n"
 	ans += "<tr><th>price</th>"
 	for i := 0; i < len(leg.Segments); i++ {
@@ -178,7 +178,7 @@ func formatLeg(leg qpx.Leg) string {
 	return ans + "</table>\n"
 }
 
-func formatSeg(seg qpx.Segment) string {
+func formatSeg(seg legfinder.Segment) string {
 	return fmt.Sprintf("<td>%s %s<br>\n%s -> %s<br>\n%v<br>\n%v</td>",
 		seg.Airlines,
 		seg.FlightNumber,

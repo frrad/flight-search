@@ -5,30 +5,30 @@ import (
 	"sort"
 	"time"
 
-	"github.com/frrad/flight-search/flight-backend/qpx"
+	"github.com/frrad/flight-search/flight-backend/legfinder"
 )
 
 type TripPlanner struct {
-	finder *qpx.QPXFinder
+	finder legfinder.LegFinder
 }
 
-func NewPlanner(f *qpx.QPXFinder) *TripPlanner {
+func NewPlanner(f legfinder.LegFinder) *TripPlanner {
 	return &TripPlanner{finder: f}
 }
 
 type TripOption struct {
 	Id    int
-	Legs  []qpx.Leg
+	Legs  []legfinder.Leg
 	Price int
 }
 
-func (tp *TripPlanner) ListOptions(tripSpecs []qpx.TripSpec) ([]TripOption, error) {
-	ans := make([][][]qpx.Leg, len(tripSpecs))
-	memo := make(map[string][]qpx.Leg)
+func (tp *TripPlanner) ListOptions(tripSpecs []legfinder.TripSpec) ([]TripOption, error) {
+	ans := make([][][]legfinder.Leg, len(tripSpecs))
+	memo := make(map[string][]legfinder.Leg)
 
 	for i, trip := range tripSpecs {
 
-		ans[i] = make([][]qpx.Leg, len(trip))
+		ans[i] = make([][]legfinder.Leg, len(trip))
 
 		for j, leg := range trip {
 			if solns, ok := memo[leg.Hash()]; ok {
@@ -63,7 +63,7 @@ func (tp *TripPlanner) ListOptions(tripSpecs []qpx.TripSpec) ([]TripOption, erro
 	return tripOptions, nil
 }
 
-func consistentOptions(i int, options [][]qpx.Leg, departAfter time.Time) []TripOption {
+func consistentOptions(i int, options [][]legfinder.Leg, departAfter time.Time) []TripOption {
 	ans := []TripOption{}
 	if len(options) == 0 {
 		return ans
@@ -77,7 +77,7 @@ func consistentOptions(i int, options [][]qpx.Leg, departAfter time.Time) []Trip
 		if len(options) == 1 {
 			ans = append(ans, TripOption{
 				Id:    i,
-				Legs:  []qpx.Leg{option},
+				Legs:  []legfinder.Leg{option},
 				Price: option.Price,
 			})
 			continue
@@ -88,7 +88,7 @@ func consistentOptions(i int, options [][]qpx.Leg, departAfter time.Time) []Trip
 		for _, soln := range subProblem {
 			ans = append(ans, TripOption{
 				Id:    i,
-				Legs:  append([]qpx.Leg{option}, soln.Legs...),
+				Legs:  append([]legfinder.Leg{option}, soln.Legs...),
 				Price: option.Price + soln.Price,
 			})
 

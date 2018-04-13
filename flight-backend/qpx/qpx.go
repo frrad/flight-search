@@ -7,11 +7,10 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
-)
 
-type TripSpec []LegSpec
+	"github.com/frrad/flight-search/flight-backend/legfinder"
+)
 
 type QPXFinder struct {
 	apiKey string
@@ -23,39 +22,14 @@ func NewQPXFinder(key string) *QPXFinder {
 	}
 }
 
-type LegSpec struct {
-	Origin      string
-	Destination string
-	Dates       []string // "YYYY-MM-DD"
-}
-
 type qpxSpec struct {
 	Origin      string
 	Destination string
 	Date        string // "YYYY-MM-DD"
 }
 
-type Leg struct {
-	Price    int // In pennies USD
-	Segments []Segment
-	//	fake     string
-}
-
-type Segment struct {
-	Airlines      string
-	FlightNumber  string
-	ArrivalTime   time.Time
-	DepartureTime time.Time
-	Origin        string
-	Destination   string
-}
-
-func (l LegSpec) Hash() string {
-	return strings.Join(append(l.Dates, l.Origin, l.Destination), "$")
-}
-
-func (f *QPXFinder) Find(spec LegSpec) ([]Leg, error) {
-	ans := []Leg{}
+func (f *QPXFinder) Find(spec legfinder.LegSpec) ([]legfinder.Leg, error) {
+	ans := []legfinder.Leg{}
 	for _, date := range spec.Dates {
 		oneDay, err := f.findOneDate(
 			qpxSpec{
@@ -71,7 +45,7 @@ func (f *QPXFinder) Find(spec LegSpec) ([]Leg, error) {
 	return ans, nil
 }
 
-func (f *QPXFinder) findOneDate(spec qpxSpec) ([]Leg, error) {
+func (f *QPXFinder) findOneDate(spec qpxSpec) ([]legfinder.Leg, error) {
 
 	req := qpxRequest{
 		Solutions: 10,
@@ -99,10 +73,10 @@ func (f *QPXFinder) findOneDate(spec qpxSpec) ([]Leg, error) {
 	return interpretResp(resp)
 }
 
-func interpretResp(resp qpxResponse) ([]Leg, error) {
-	ans := make([]Leg, len(resp.Trips.TripOption))
+func interpretResp(resp qpxResponse) ([]legfinder.Leg, error) {
+	ans := make([]legfinder.Leg, len(resp.Trips.TripOption))
 	for i, option := range resp.Trips.TripOption {
-		segmentsFromTrip := make([]Segment, 0)
+		segmentsFromTrip := make([]legfinder.Segment, 0)
 
 		costStr := option.SaleTotal
 		if costStr[:3] != "USD" {
@@ -124,7 +98,7 @@ func interpretResp(resp qpxResponse) ([]Leg, error) {
 					parsedArrival, _ := time.Parse(layout, leg.ArrivalTime)
 					parsedDeparture, _ := time.Parse(layout, leg.DepartureTime)
 
-					segmentsFromTrip = append(segmentsFromTrip, Segment{
+					segmentsFromTrip = append(segmentsFromTrip, legfinder.Segment{
 						Airlines:      flight.Carrier,
 						FlightNumber:  flight.Number,
 						ArrivalTime:   parsedArrival,
@@ -138,7 +112,7 @@ func interpretResp(resp qpxResponse) ([]Leg, error) {
 		}
 
 		//		asdf, _ := json.Marshal(option)
-		ans[i] = Leg{
+		ans[i] = legfinder.Leg{
 			Price:    int(d * 100),
 			Segments: segmentsFromTrip,
 			//			fake:     string(asdf),
