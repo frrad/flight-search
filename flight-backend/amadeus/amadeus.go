@@ -107,13 +107,11 @@ func legsFromItins(price int, itins []Itinerary) ([]legfinder.Leg, error) {
 
 	}
 
-	log.Println(legs)
 	return legs, nil
 }
 
 func extractPrice(priceStr string) (int, error) {
 	extracted := priceRE.FindStringSubmatch(priceStr)
-	log.Println(extracted)
 
 	if len(extracted) != 3 {
 		return 0, fmt.Errorf("Trouble parsing price, %s", priceStr)
@@ -134,7 +132,6 @@ func extractPrice(priceStr string) (int, error) {
 }
 
 func (a *AmadeusLegFinder) callAPI(origin, destination, date string) (*amadeusResponse, error) {
-	log.Println(origin, destination, date)
 
 	urlTemplate := "https://api.sandbox.amadeus.com/v1.2/flights/low-fare-search?apikey=%s&origin=%s&destination=%s&departure_date=%s"
 	url := fmt.Sprintf(urlTemplate, a.apiKey, origin, destination, date)

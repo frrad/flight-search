@@ -51,8 +51,13 @@ func (tp *TripPlanner) ListOptions(tripSpecs []legfinder.TripSpec) ([]TripOption
 
 	tripOptions := []TripOption{}
 	for i, options := range ans {
+		theseOptions := consistentOptions(i, options, time.Now())
 
-		tripOptions = append(tripOptions, consistentOptions(i, options, time.Now())...)
+		if len(theseOptions) > 20 {
+			theseOptions = theseOptions[:20]
+		}
+
+		tripOptions = append(tripOptions, theseOptions...)
 	}
 
 	log.Printf("Found %d options", len(tripOptions))
