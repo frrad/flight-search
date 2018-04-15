@@ -6,9 +6,13 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"regexp"
+	"strconv"
 
 	"github.com/frrad/flight-search/flight-backend/legfinder"
 )
+
+var priceRE = regexp.MustCompile("^([0-9]*)\\.([0-9]*)$")
 
 type AmadeusLegFinder struct {
 	apiKey string
@@ -49,9 +53,67 @@ func legsFromAmadeusResults(results []amadeusResult) ([]legfinder.Leg, error) {
 
 	ans := []legfinder.Leg{}
 	for _, result := range results {
-		price := result.Fare.TotalPrice // dollars.cents string
+		priceStr := result.Fare.TotalPrice
+		price, err := extractPrice(priceStr)
+		if err != nil {
+			return nil, err
+		}
+
+		newLegs := legsFromItins(price, result.Itineraries)
+
+		ans = append(ans, newLegs...)
+
 	}
 	return ans, nil
+}
+
+func legsFromItins(price int, itins []Itinerary) []legfinder.Leg {
+	legs := []legfinder.Leg{}
+
+	for _, it := range itins {
+
+		segs := []legfinder.Segment{}
+
+		for _, flight := range it.Outbound.Flights {
+			segs = append(segs, legfinder.Segment{
+				Airlines:      flight,
+				FlightNumber:  flight,
+				ArrivalTime:   flight,
+				DepartureTime: flight,
+				Origin:        flight,
+				Destination:   flight,
+			})
+		}
+
+		legs = append(legs, legfinder.Leg{
+			Price:    price,
+			Segments: segs,
+		})
+
+	}
+	return legs
+}
+
+func extractPrice(priceStr string) (int, error) {
+	extracted := priceRE.FindStringSubmatch(priceStr)
+	log.Println(extracted)
+
+	if len(extracted) != 3 {
+		return 0, fmt.Errorf("Trouble parsing price, %s", priceStr)
+	}
+
+	dollars, cents := extracted[1], extracted[2]
+
+	d, err := strconv.Atoi(dollars)
+	if err != nil {
+		return 0, err
+	}
+	c, err := strconv.Atoi(cents)
+	if err != nil {
+		return 0, err
+	}
+
+	return d*100 + c, nil
 }
 
 func (a *AmadeusLegFinder) callAPI(origin, destination, date string) (*amadeusResponse, error) {
@@ -105,31 +167,35 @@ type fareInfo struct {
 	TotalPrice string `json:"total_price"`
 }
 
+type Itinerary struct {
+	Outbound struct {
+		Flights []Flight `json:"flights"`
+	} `json:"outbound"`
+}
+
+type Flight struct {
+	Aircraft    string `json:"aircraft"`
+	ArrivesAt   string `json:"arrives_at"`
+	BookingInfo struct {
+		BookingCode    string `json:"booking_code"`
+		SeatsRemaining int64  `json:"seats_remaining"`
+		TravelClass    string `json:"travel_class"`
+	} `json:"booking_info"`
+	DepartsAt   string `json:"departs_at"`
+	Destination struct {
+		Airport  string `json:"airport"`
+		Terminal string `json:"terminal"`
+	} `json:"destination"`
+	FlightNumber     string `json:"flight_number"`
+	MarketingAirline string `json:"marketing_airline"`
+	OperatingAirline string `json:"operating_airline"`
+	Origin           struct {
+		Airport  string `json:"airport"`
+		Terminal string `json:"terminal"`
+	} `json:"origin"`
+}
+
 type amadeusResult struct {
-	Fare        fareInfo `json:"fare"`
-	Itineraries []struct {
-		Outbound struct {
-			Flights []struct {
-				Aircraft    string `json:"aircraft"`
-				ArrivesAt   string `json:"arrives_at"`
-				BookingInfo struct {
-					BookingCode    string `json:"booking_code"`
-					SeatsRemaining int64  `json:"seats_remaining"`
-					TravelClass    string `json:"travel_class"`
-				} `json:"booking_info"`
-				DepartsAt   string `json:"departs_at"`
-				Destination struct {
-					Airport  string `json:"airport"`
-					Terminal string `json:"terminal"`
-				} `json:"destination"`
-				FlightNumber     string `json:"flight_number"`
-				MarketingAirline string `json:"marketing_airline"`
-				OperatingAirline string `json:"operating_airline"`
-				Origin           struct {
-					Airport  string `json:"airport"`
-					Terminal string `json:"terminal"`
-				} `json:"origin"`
-			} `json:"flights"`
-		} `json:"outbound"`
-	} `json:"itineraries"`
+	Fare        fareInfo    `json:"fare"`
+	Itineraries []Itinerary `json:"itineraries"`
 }

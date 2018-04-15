@@ -51,6 +51,7 @@ func (tp *TripPlanner) ListOptions(tripSpecs []legfinder.TripSpec) ([]TripOption
 
 	tripOptions := []TripOption{}
 	for i, options := range ans {
+
 		tripOptions = append(tripOptions, consistentOptions(i, options, time.Now())...)
 	}
 
