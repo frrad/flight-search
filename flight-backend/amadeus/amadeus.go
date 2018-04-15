@@ -8,11 +8,14 @@ import (
 	"net/http"
 	"regexp"
 	"strconv"
+	"time"
 
 	"github.com/frrad/flight-search/flight-backend/legfinder"
 )
 
 var priceRE = regexp.MustCompile("^([0-9]*)\\.([0-9]*)$")
+
+const timeLayout = "2006-01-02T15:04"
 
 type AmadeusLegFinder struct {
 	apiKey string
@@ -59,7 +62,10 @@ func legsFromAmadeusResults(results []amadeusResult) ([]legfinder.Leg, error) {
 			return nil, err
 		}
 
-		newLegs := legsFromItins(price, result.Itineraries)
+		newLegs, err := legsFromItins(price, result.Itineraries)
+		if err != nil {
+			return nil, err
+		}
 
 		ans = append(ans, newLegs...)
 
@@ -67,7 +73,7 @@ func legsFromAmadeusResults(results []amadeusResult) ([]legfinder.Leg, error) {
 	return ans, nil
 }
 
-func legsFromItins(price int, itins []Itinerary) []legfinder.Leg {
+func legsFromItins(price int, itins []Itinerary) ([]legfinder.Leg, error) {
 	legs := []legfinder.Leg{}
 
 	for _, it := range itins {
@@ -75,13 +81,22 @@ func legsFromItins(price int, itins []Itinerary) []legfinder.Leg {
 		segs := []legfinder.Segment{}
 
 		for _, flight := range it.Outbound.Flights {
+			arrive, err := time.Parse(timeLayout, flight.ArrivesAt)
+			if err != nil {
+				return nil, err
+			}
+			depart, err := time.Parse(timeLayout, flight.DepartsAt)
+			if err != nil {
+				return nil, err
+			}
+
 			segs = append(segs, legfinder.Segment{
-				Airlines:      flight,
-				FlightNumber:  flight,
-				ArrivalTime:   flight,
-				DepartureTime: flight,
-				Origin:        flight,
-				Destination:   flight,
+				Airlines:      flight.OperatingAirline,
+				FlightNumber:  flight.FlightNumber,
+				ArrivalTime:   arrive,
+				DepartureTime: depart,
+				Origin:        flight.Origin.Airport,
+				Destination:   flight.Destination.Airport,
 			})
 		}
 
@@ -91,7 +106,9 @@ func legsFromItins(price int, itins []Itinerary) []legfinder.Leg {
 		})
 
 	}
-	return legs
+
+	log.Println(legs)
+	return legs, nil
 }
 
 func extractPrice(priceStr string) (int, error) {
