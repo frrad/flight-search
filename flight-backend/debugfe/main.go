@@ -55,7 +55,7 @@ Error unmarshalling json:
 `
 
 	defaultDAG := `
-{"Nodes":[{"IsAirport":false,"Name":"start","FlightsOut":[{"ToNode":1,"Dates":null},{"ToNode":2,"Dates":null}]},{"IsAirport":true,"Name":"SFO","FlightsOut":[{"ToNode":3,"Dates":["2018-05-15"]}]},{"IsAirport":true,"Name":"OAK","FlightsOut":[{"ToNode":3,"Dates":["2018-05-16"]}]},{"IsAirport":false,"Name":"<flight>","FlightsOut":[{"ToNode":4,"Dates":null},{"ToNode":5,"Dates":null}]},{"IsAirport":true,"Name":"MCO","FlightsOut":[{"ToNode":6,"Dates":null}]},{"IsAirport":true,"Name":"MIA","FlightsOut":[{"ToNode":6,"Dates":null}]},{"IsAirport":false,"Name":"<flight>","FlightsOut":[{"ToNode":7,"Dates":["2018-05-20"]}]},{"IsAirport":true,"Name":"JFK","FlightsOut":[{"ToNode":8,"Dates":null}]},{"IsAirport":false,"Name":"end","FlightsOut":[]}]}
+{"Nodes":[{"IsAirport":false,"Name":"start","FlightsOut":[{"ToNode":1,"Dates":null},{"ToNode":2,"Dates":null}]},{"IsAirport":true,"Name":"SFO","FlightsOut":[{"ToNode":3,"Dates":["2018-11-01"]}]},{"IsAirport":true,"Name":"OAK","FlightsOut":[{"ToNode":3,"Dates":["2018-11-01"]}]},{"IsAirport":false,"Name":"<flight>","FlightsOut":[{"ToNode":4,"Dates":null},{"ToNode":5,"Dates":null}]},{"IsAirport":true,"Name":"MCO","FlightsOut":[{"ToNode":6,"Dates":null}]},{"IsAirport":true,"Name":"MIA","FlightsOut":[{"ToNode":6,"Dates":null}]},{"IsAirport":false,"Name":"<flight>","FlightsOut":[{"ToNode":7,"Dates":["2018-12-01"]}]},{"IsAirport":true,"Name":"JFK","FlightsOut":[{"ToNode":8,"Dates":null}]},{"IsAirport":false,"Name":"end","FlightsOut":[]}]}
 `
 
 	tmpl := template.New("debugfe.html")

@@ -33,6 +33,10 @@ func (a *AmadeusLegFinder) Find(spec legfinder.LegSpec) ([]legfinder.Leg, error)
 	for _, date := range spec.Dates {
 		response, err := a.callAPI(spec.Origin, spec.Destination, date)
 		if err != nil {
+			if _, ok := err.(noResultsError); ok {
+				return []legfinder.Leg{}, nil
+			}
+
 			return nil, err
 		}
 		if response.Currency != "USD" {
@@ -142,13 +146,27 @@ func (a *AmadeusLegFinder) callAPI(origin, destination, date string) (*amadeusRe
 		return nil, err
 	}
 
-	if resp.StatusCode != 200 {
-		log.Println("Amadeus returned code", resp.StatusCode)
-		return nil, fmt.Errorf("Amadeus returned code %d", resp.StatusCode)
-	}
-
 	defer resp.Body.Close()
 	contents, err := ioutil.ReadAll(resp.Body)
+
+	if resp.StatusCode != 200 {
+		log.Println("Amadeus returned code", resp.StatusCode)
+		log.Println(string(contents))
+
+		errInfo := amadeusError{}
+		err := json.Unmarshal(contents, &errInfo)
+		if err != nil {
+			log.Println("error unmarshalling error", string(contents))
+			return nil, err
+		}
+
+		if errInfo.Message == "No result found." {
+			return nil, noResultsError{}
+		}
+
+		return nil, fmt.Errorf("Amadeus returned code %d.\n%+v", resp.StatusCode, errInfo)
+	}
+
 	if err != nil {
 		log.Println("error reading response body", err)
 		return nil, err
@@ -162,6 +180,18 @@ func (a *AmadeusLegFinder) callAPI(origin, destination, date string) (*amadeusRe
 	}
 
 	return &result, nil
+}
+
+type noResultsError struct{}
+
+func (x noResultsError) Error() string {
+	return ""
+}
+
+type amadeusError struct {
+	Status   int    `json:"status"`
+	Message  string `json:"message"`
+	MoreInfo string `json:"more_info"`
 }
 
 type amadeusResponse struct {
