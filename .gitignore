@@ -3,3 +3,4 @@
 *.pyc
 api.key
 /node_modules/*
+/flight-backend/debugfe/debugfe

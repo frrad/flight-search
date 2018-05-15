@@ -123,7 +123,7 @@ func (dag DAG) pathToSpecs(path []int) []legfinder.LegSpec {
 
 // List of all paths from Ith node to the end
 func (dag DAG) pathsFromI(i int) [][]int {
-	if i == len(dag.Nodes)-1 {
+	if isEnd(i, dag.Nodes) {
 		return [][]int{{}}
 	}
 	ans := [][]int{}
@@ -135,5 +135,13 @@ func (dag DAG) pathsFromI(i int) [][]int {
 		}
 	}
 
+	if len(ans) == 0 {
+		return [][]int{{}}
+	}
+
 	return ans
+}
+
+func isEnd(i int, nodes []Node) bool {
+	return i == len(nodes)-1
 }

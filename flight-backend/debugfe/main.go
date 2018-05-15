@@ -20,13 +20,48 @@ type pageData struct {
 	UnmarshalError string
 	GraphImage     string
 	BEResponseHTML string
+	RT             rtData
 }
 
-func HelloServer(w http.ResponseWriter, req *http.Request) {
+func generalHandler(w http.ResponseWriter, req *http.Request) {
+	defaultDAG := `
+{"Nodes":[{"IsAirport":false,"Name":"start","FlightsOut":[{"ToNode":1,"Dates":null},{"ToNode":2,"Dates":null}]},{"IsAirport":true,"Name":"SFO","FlightsOut":[{"ToNode":3,"Dates":["2018-11-01"]}]},{"IsAirport":true,"Name":"OAK","FlightsOut":[{"ToNode":3,"Dates":["2018-11-01"]}]},{"IsAirport":false,"Name":"<flight>","FlightsOut":[{"ToNode":4,"Dates":null},{"ToNode":5,"Dates":null}]},{"IsAirport":true,"Name":"MCO","FlightsOut":[{"ToNode":6,"Dates":null}]},{"IsAirport":true,"Name":"MIA","FlightsOut":[{"ToNode":6,"Dates":null}]},{"IsAirport":false,"Name":"<flight>","FlightsOut":[{"ToNode":7,"Dates":["2018-12-01"]}]},{"IsAirport":true,"Name":"JFK","FlightsOut":[{"ToNode":8,"Dates":null}]},{"IsAirport":false,"Name":"end","FlightsOut":[]}]}
+`
+
+	jsonString := req.FormValue("dagjson")
+	if jsonString == "" {
+		jsonString = defaultDAG
+	}
+
+	err := respond(w, jsonString, rtData{})
+	if err != nil {
+		panic(err)
+	}
+}
+
+func respond(w http.ResponseWriter, jsonString string, roundTrip rtData) error {
 	page := `
 <html>
 
 <head><title>Debug Frontend</title><head>
+
+<form action="/rt.html" method="get" id="55164">
+<table>
+<tr>
+<th>start date</th>
+<th>start airports</th>
+<th>end date</th>
+<th>end airports</th>
+</tr>
+<tr>
+<td><input type="text" name="startdate" value="{{.RT.StartDate}}"></td>
+<td><input type="text" name="startairports" value="{{.RT.StartAirports}}"></td>
+<td><input type="text" name="enddate" value="{{.RT.EndDate}}"></td>
+<td><input type="text" name="endairports" value="{{.RT.EndAirports}}"></td>
+</tr>
+</table>
+<input type="submit" value="Submit">
+</form>
 
 {{if .UnmarshalError}}
 Error unmarshalling json:
@@ -48,14 +83,10 @@ Error unmarshalling json:
 
 <br>
 <textarea name="dagjson" cols="80" rows="20" form="03670">{{.DAGJSON}}</textarea>
-<form method="post" id="03670">
+<form action="/debugfe.html" method="post" id="03670">
 <input type="submit" value="Submit">
 </form>
 </html>
-`
-
-	defaultDAG := `
-{"Nodes":[{"IsAirport":false,"Name":"start","FlightsOut":[{"ToNode":1,"Dates":null},{"ToNode":2,"Dates":null}]},{"IsAirport":true,"Name":"SFO","FlightsOut":[{"ToNode":3,"Dates":["2018-11-01"]}]},{"IsAirport":true,"Name":"OAK","FlightsOut":[{"ToNode":3,"Dates":["2018-11-01"]}]},{"IsAirport":false,"Name":"<flight>","FlightsOut":[{"ToNode":4,"Dates":null},{"ToNode":5,"Dates":null}]},{"IsAirport":true,"Name":"MCO","FlightsOut":[{"ToNode":6,"Dates":null}]},{"IsAirport":true,"Name":"MIA","FlightsOut":[{"ToNode":6,"Dates":null}]},{"IsAirport":false,"Name":"<flight>","FlightsOut":[{"ToNode":7,"Dates":["2018-12-01"]}]},{"IsAirport":true,"Name":"JFK","FlightsOut":[{"ToNode":8,"Dates":null}]},{"IsAirport":false,"Name":"end","FlightsOut":[]}]}
 `
 
 	tmpl := template.New("debugfe.html")
@@ -64,12 +95,8 @@ Error unmarshalling json:
 		panic(err)
 	}
 
-	jsonString := req.FormValue("dagjson")
-	if jsonString == "" {
-		jsonString = defaultDAG
-	}
-
-	data := pageData{}
+	data := pageData{
+		RT: roundTrip}
 
 	dag := querydag.DAG{}
 	err = json.Unmarshal([]byte(jsonString), &dag)
@@ -79,10 +106,7 @@ Error unmarshalling json:
 		data.UnmarshalError = fmt.Sprintf("%v", err)
 
 		err = tmpl.Execute(w, data)
-		if err != nil {
-			panic(err)
-		}
-		return
+		return err
 	}
 
 	b, _ := json.MarshalIndent(dag, "", "  ")
@@ -97,10 +121,8 @@ Error unmarshalling json:
 		data.BEResponseHTML = fmt.Sprintf("Error querying backend:\n<br>\n%+v<br>\n%s", err, beResp)
 	}
 
-	err = tmpl.Execute(w, data)
-	if err != nil {
-		panic(err)
-	}
+	tmpl.Execute(w, data)
+	return nil
 }
 
 func queryBackend(dag querydag.DAG) ([]trip.TripOption, error) {
@@ -190,7 +212,8 @@ func formatSeg(seg legfinder.Segment) string {
 }
 
 func main() {
-	http.HandleFunc("/debugfe.html", HelloServer)
+	http.HandleFunc("/debugfe.html", generalHandler)
+	http.HandleFunc("/rt.html", rtHandler)
 	log.Fatal(http.ListenAndServe(":9109", nil))
 }
 
